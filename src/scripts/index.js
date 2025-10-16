@@ -9,7 +9,7 @@
 import { initialCards } from "./cards.js";
 import { createCardElement, deleteCard, likeCard } from "./components/card.js";
 import { openModalWindow, closeModalWindow, setCloseModalWindowEventListeners } from "./components/modal.js";
-import { enableValidation } from "./components/validation.js";
+import { enableValidation, clearValidation } from "./components/validation.js";
 
 // Настройки валидации (универсальные селекторы и классы)
 const validationSettings = {
