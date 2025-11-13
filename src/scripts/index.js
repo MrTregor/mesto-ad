@@ -6,22 +6,35 @@
   Из index.js не допускается что то экспортировать
 */
 
-import { initialCards } from "./cards.js";
-import { createCardElement, deleteCard, likeCard } from "./components/card.js";
-import { openModalWindow, closeModalWindow, setCloseModalWindowEventListeners } from "./components/modal.js";
-import { enableValidation, clearValidation } from "./components/validation.js";
+import {createCardElement, deleteCard, likeCard} from "./components/card.js";
+import {openModalWindow, closeModalWindow, setCloseModalWindowEventListeners} from "./components/modal.js";
+import {enableValidation, clearValidation} from "./components/validation.js";
+import {getCardList, getUserInfo, setUserInfo} from "./components/api.js";
 
 // Настройки валидации (универсальные селекторы и классы)
 const validationSettings = {
-  formSelector: ".popup__form",
-  inputSelector: ".popup__input",
-  submitButtonSelector: ".popup__button",
-  inactiveButtonClass: "popup__button_disabled",
-  inputErrorClass: "popup__input_type_error",
-  errorClass: "popup__error_visible",
+    formSelector: ".popup__form",
+    inputSelector: ".popup__input",
+    submitButtonSelector: ".popup__button",
+    inactiveButtonClass: "popup__button_disabled",
+    inputErrorClass: "popup__input_type_error",
+    errorClass: "popup__error_visible",
 };
 
 enableValidation(validationSettings);
+
+const config = {
+    baseUrl: "https://mesto.nomoreparties.co/v1/apf-cohort-202",
+    headers: {
+        authorization: "e269baa8-9378-456f-bc9e-338e5ab687da",
+        "Content-Type": "application/json",
+    },
+};
+
+const getResponseData = (res) => {
+    return res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`);
+};
+
 // DOM узлы
 const placesWrap = document.querySelector(".places__list");
 const profileFormModalWindow = document.querySelector(".popup_type_edit");
@@ -49,43 +62,53 @@ const avatarFormModalWindow = document.querySelector(".popup_type_edit-avatar");
 const avatarForm = avatarFormModalWindow.querySelector(".popup__form");
 const avatarInput = avatarForm.querySelector(".popup__input");
 
-const handlePreviewPicture = ({ name, link }) => {
-  imageElement.src = link;
-  imageElement.alt = name;
-  imageCaption.textContent = name;
-  openModalWindow(imageModalWindow);
+const handlePreviewPicture = ({name, link}) => {
+    imageElement.src = link;
+    imageElement.alt = name;
+    imageCaption.textContent = name;
+    openModalWindow(imageModalWindow);
 };
 
 const handleProfileFormSubmit = (evt) => {
-  evt.preventDefault();
-  profileTitle.textContent = profileTitleInput.value;
-  profileDescription.textContent = profileDescriptionInput.value;
-  closeModalWindow(profileFormModalWindow);
+    evt.preventDefault();
+    setUserInfo({
+        name: profileTitleInput.value,
+        about: profileDescriptionInput.value,
+    })
+        .then((userData) => {
+            console.log(userData);
+            profileTitle.textContent = userData.name;
+            profileDescription.textContent = userData.about;
+    closeModalWindow(profileFormModalWindow);
+        })
+        .catch((err) => {
+            console.log(err);
+        });
 };
 
 const handleAvatarFromSubmit = (evt) => {
-  evt.preventDefault();
-  profileAvatar.style.backgroundImage = `url(${avatarInput.value})`;
-  closeModalWindow(avatarFormModalWindow);
+    evt.preventDefault();
+    profileAvatar.style.backgroundImage = `url(${avatarInput.value})`;
+    closeModalWindow(avatarFormModalWindow);
 };
 
 const handleCardFormSubmit = (evt) => {
-  evt.preventDefault();
-  placesWrap.prepend(
-    createCardElement(
-      {
-        name: cardNameInput.value,
-        link: cardLinkInput.value,
-      },
-      {
-        onPreviewPicture: handlePreviewPicture,
-        onLikeIcon: likeCard,
-        onDeleteCard: deleteCard,
-      }
-    )
-  );
+    evt.preventDefault();
+    placesWrap.prepend(
+        createCardElement(
+            {
+                name: cardNameInput.value,
+                link: cardLinkInput.value,
+            },
+            {
+                onPreviewPicture: handlePreviewPicture,
+                onLikeIcon: likeCard,
+                onDeleteCard: deleteCard,
+            }
+        )
+    );
 
-  closeModalWindow(cardFormModalWindow);
+    closeModalWindow(cardFormModalWindow);
 };
 
 // EventListeners
@@ -94,34 +117,46 @@ cardForm.addEventListener("submit", handleCardFormSubmit);
 avatarForm.addEventListener("submit", handleAvatarFromSubmit);
 
 openProfileFormButton.addEventListener("click", () => {
-  profileTitleInput.value = profileTitle.textContent;
-  profileDescriptionInput.value = profileDescription.textContent;
-  openModalWindow(profileFormModalWindow);
+    profileTitleInput.value = profileTitle.textContent;
+    profileDescriptionInput.value = profileDescription.textContent;
+    openModalWindow(profileFormModalWindow);
 });
 
 profileAvatar.addEventListener("click", () => {
-  avatarForm.reset();
-  openModalWindow(avatarFormModalWindow);
+    avatarForm.reset();
+    openModalWindow(avatarFormModalWindow);
 });
 
 openCardFormButton.addEventListener("click", () => {
-  cardForm.reset();
-  openModalWindow(cardFormModalWindow);
+    cardForm.reset();
+    openModalWindow(cardFormModalWindow);
 });
 
 // отображение карточек
-initialCards.forEach((data) => {
-  placesWrap.append(
-    createCardElement(data, {
-      onPreviewPicture: handlePreviewPicture,
-      onLikeIcon: likeCard,
-      onDeleteCard: deleteCard,
+Promise.all([getCardList(), getUserInfo()])
+    .then(([cards, userData]) => {
+        // Отображаем данные пользователя
+        profileTitle.textContent = userData.name;
+        profileDescription.textContent = userData.about;
+        profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
+
+        // Отображаем карточки
+        cards.forEach((data) => {
+            placesWrap.append(
+                createCardElement(data, {
+                    onPreviewPicture: handlePreviewPicture,
+                    onLikeIcon: likeCard,
+                    onDeleteCard: deleteCard,
+                })
+            );
+        });
     })
-  );
-});
+    .catch((err) => {
+        console.log(err); // В случае возникновения ошибки выводим её в консоль
+    });
 
 //настраиваем обработчики закрытия попапов
 const allPopups = document.querySelectorAll(".popup");
 allPopups.forEach((popup) => {
-  setCloseModalWindowEventListeners(popup);
+    setCloseModalWindowEventListeners(popup);
 });
