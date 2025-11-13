@@ -9,7 +9,7 @@
 import {createCardElement, deleteCard, likeCard} from "./components/card.js";
 import {openModalWindow, closeModalWindow, setCloseModalWindowEventListeners} from "./components/modal.js";
 import {enableValidation, clearValidation} from "./components/validation.js";
-import {getCardList, getUserInfo, setUserInfo, setUserAvatar} from "./components/api.js";
+import {getCardList, getUserInfo, setUserInfo, setUserAvatar, addCard} from "./components/api.js";
 
 // Настройки валидации (универсальные селекторы и классы)
 const validationSettings = {
@@ -99,12 +99,14 @@ const handleAvatarFromSubmit = (evt) => {
 
 const handleCardFormSubmit = (evt) => {
     evt.preventDefault();
+    addCard({
+        name: cardNameInput.value,
+        link: cardLinkInput.value,
+    })
+        .then((cardData) => {
     placesWrap.prepend(
         createCardElement(
-            {
-                name: cardNameInput.value,
-                link: cardLinkInput.value,
-            },
+                    cardData,
             {
                 onPreviewPicture: handlePreviewPicture,
                 onLikeIcon: likeCard,
@@ -114,6 +116,10 @@ const handleCardFormSubmit = (evt) => {
     );
 
     closeModalWindow(cardFormModalWindow);
+        })
+        .catch((err) => {
+            console.log(err);
+        });
 };
 
 // EventListeners
