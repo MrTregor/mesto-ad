@@ -9,7 +9,7 @@
 import {createCardElement, deleteCard, likeCard} from "./components/card.js";
 import {openModalWindow, closeModalWindow, setCloseModalWindowEventListeners} from "./components/modal.js";
 import {enableValidation, clearValidation} from "./components/validation.js";
-import {getCardList, getUserInfo, setUserInfo, setUserAvatar, addCard} from "./components/api.js";
+import {getCardList, getUserInfo, setUserInfo, setUserAvatar, addCard, deleteCard as deleteCardApi} from "./components/api.js";
 
 // Настройки валидации (универсальные селекторы и классы)
 const validationSettings = {
@@ -62,11 +62,24 @@ const avatarFormModalWindow = document.querySelector(".popup_type_edit-avatar");
 const avatarForm = avatarFormModalWindow.querySelector(".popup__form");
 const avatarInput = avatarForm.querySelector(".popup__input");
 
+// Переменная для хранения ID текущего пользователя
+let currentUserId = null;
+
 const handlePreviewPicture = ({name, link}) => {
     imageElement.src = link;
     imageElement.alt = name;
     imageCaption.textContent = name;
     openModalWindow(imageModalWindow);
+};
+
+const handleDeleteCard = (cardElement, cardId) => {
+    deleteCardApi(cardId)
+        .then(() => {
+            deleteCard(cardElement);
+        })
+        .catch((err) => {
+            console.log(err);
+        });
 };
 
 const handleProfileFormSubmit = (evt) => {
@@ -110,7 +123,8 @@ const handleCardFormSubmit = (evt) => {
             {
                 onPreviewPicture: handlePreviewPicture,
                 onLikeIcon: likeCard,
-                onDeleteCard: deleteCard,
+                        onDeleteCard: handleDeleteCard,
+                        userId: currentUserId,
             }
         )
     );
@@ -146,6 +160,9 @@ openCardFormButton.addEventListener("click", () => {
 // отображение карточек и данных пользователя
 Promise.all([getCardList(), getUserInfo()])
     .then(([cards, userData]) => {
+        // Сохраняем ID текущего пользователя
+        currentUserId = userData._id;
+
         // Отображаем данные пользователя
         profileTitle.textContent = userData.name;
         profileDescription.textContent = userData.about;
@@ -157,7 +174,8 @@ Promise.all([getCardList(), getUserInfo()])
                 createCardElement(data, {
                     onPreviewPicture: handlePreviewPicture,
                     onLikeIcon: likeCard,
-                    onDeleteCard: deleteCard,
+                    onDeleteCard: handleDeleteCard,
+                    userId: currentUserId,
                 })
             );
         });
