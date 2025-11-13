@@ -9,7 +9,7 @@
 import {createCardElement, deleteCard, likeCard} from "./components/card.js";
 import {openModalWindow, closeModalWindow, setCloseModalWindowEventListeners} from "./components/modal.js";
 import {enableValidation, clearValidation} from "./components/validation.js";
-import {getCardList, getUserInfo, setUserInfo} from "./components/api.js";
+import {getCardList, getUserInfo, setUserInfo, setUserAvatar} from "./components/api.js";
 
 // Настройки валидации (универсальные селекторы и классы)
 const validationSettings = {
@@ -76,7 +76,6 @@ const handleProfileFormSubmit = (evt) => {
         about: profileDescriptionInput.value,
     })
         .then((userData) => {
-            console.log(userData);
             profileTitle.textContent = userData.name;
             profileDescription.textContent = userData.about;
     closeModalWindow(profileFormModalWindow);
@@ -88,8 +87,14 @@ const handleProfileFormSubmit = (evt) => {
 
 const handleAvatarFromSubmit = (evt) => {
     evt.preventDefault();
-    profileAvatar.style.backgroundImage = `url(${avatarInput.value})`;
+    setUserAvatar(avatarInput.value)
+        .then((userData) => {
+            profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
     closeModalWindow(avatarFormModalWindow);
+        })
+        .catch((err) => {
+            console.log(err);
+        });
 };
 
 const handleCardFormSubmit = (evt) => {
@@ -132,7 +137,7 @@ openCardFormButton.addEventListener("click", () => {
     openModalWindow(cardFormModalWindow);
 });
 
-// отображение карточек
+// отображение карточек и данных пользователя
 Promise.all([getCardList(), getUserInfo()])
     .then(([cards, userData]) => {
         // Отображаем данные пользователя
