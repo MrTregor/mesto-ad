@@ -6,10 +6,10 @@
   Из index.js не допускается что то экспортировать
 */
 
-import {createCardElement, deleteCard, likeCard} from "./components/card.js";
+import {createCardElement, deleteCard} from "./components/card.js";
 import {openModalWindow, closeModalWindow, setCloseModalWindowEventListeners} from "./components/modal.js";
 import {enableValidation, clearValidation} from "./components/validation.js";
-import {getCardList, getUserInfo, setUserInfo, setUserAvatar, addCard, deleteCard as deleteCardApi} from "./components/api.js";
+import {getCardList, getUserInfo, setUserInfo, setUserAvatar, addCard, deleteCard as deleteCardApi, changeLikeCardStatus} from "./components/api.js";
 
 // Настройки валидации (универсальные селекторы и классы)
 const validationSettings = {
@@ -82,6 +82,20 @@ const handleDeleteCard = (cardElement, cardId) => {
         });
 };
 
+const handleLikeCard = (cardElement, cardId, likeButton, likeCounter) => {
+    const isLiked = likeButton.classList.contains("card__like-button_is-active");
+    changeLikeCardStatus(cardId, isLiked)
+        .then((updatedCard) => {
+            likeButton.classList.toggle("card__like-button_is-active");
+            if (likeCounter) {
+                likeCounter.textContent = updatedCard.likes.length;
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+};
+
 const handleProfileFormSubmit = (evt) => {
     evt.preventDefault();
     setUserInfo({
@@ -122,7 +136,7 @@ const handleCardFormSubmit = (evt) => {
                     cardData,
             {
                 onPreviewPicture: handlePreviewPicture,
-                onLikeIcon: likeCard,
+                onLikeIcon: handleLikeCard,
                         onDeleteCard: handleDeleteCard,
                         userId: currentUserId,
             }
@@ -173,7 +187,7 @@ Promise.all([getCardList(), getUserInfo()])
             placesWrap.append(
                 createCardElement(data, {
                     onPreviewPicture: handlePreviewPicture,
-                    onLikeIcon: likeCard,
+                    onLikeIcon: handleLikeCard,
                     onDeleteCard: handleDeleteCard,
                     userId: currentUserId,
                 })
