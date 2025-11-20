@@ -9,7 +9,15 @@
 import {createCardElement, deleteCard} from "./components/card.js";
 import {openModalWindow, closeModalWindow, setCloseModalWindowEventListeners} from "./components/modal.js";
 import {enableValidation, clearValidation} from "./components/validation.js";
-import {getCardList, getUserInfo, setUserInfo, setUserAvatar, addCard, deleteCard as deleteCardApi, changeLikeCardStatus} from "./components/api.js";
+import {
+    getCardList,
+    getUserInfo,
+    setUserInfo,
+    setUserAvatar,
+    addCard,
+    deleteCard as deleteCardApi,
+    changeLikeCardStatus
+} from "./components/api.js";
 
 // Настройки валидации (универсальные селекторы и классы)
 const validationSettings = {
@@ -65,6 +73,16 @@ const avatarInput = avatarForm.querySelector(".popup__input");
 // Переменная для хранения ID текущего пользователя
 let currentUserId = null;
 
+// Функция для управления состоянием кнопки во время загрузки
+const renderLoading = (button, isLoading, loadingText = "Сохранение...") => {
+    if (isLoading) {
+        button.dataset.originalText = button.textContent;
+        button.textContent = loadingText;
+    } else {
+        button.textContent = button.dataset.originalText || button.textContent;
+    }
+};
+
 const handlePreviewPicture = ({name, link}) => {
     imageElement.src = link;
     imageElement.alt = name;
@@ -98,6 +116,9 @@ const handleLikeCard = (cardElement, cardId, likeButton, likeCounter) => {
 
 const handleProfileFormSubmit = (evt) => {
     evt.preventDefault();
+    const submitButton = evt.submitter;
+    renderLoading(submitButton, true, "Сохранение...");
+
     setUserInfo({
         name: profileTitleInput.value,
         about: profileDescriptionInput.value,
@@ -105,48 +126,63 @@ const handleProfileFormSubmit = (evt) => {
         .then((userData) => {
             profileTitle.textContent = userData.name;
             profileDescription.textContent = userData.about;
-    closeModalWindow(profileFormModalWindow);
+            closeModalWindow(profileFormModalWindow);
         })
         .catch((err) => {
             console.log(err);
+        })
+        .finally(() => {
+            renderLoading(submitButton, false);
         });
 };
 
 const handleAvatarFromSubmit = (evt) => {
     evt.preventDefault();
+    const submitButton = evt.submitter;
+    renderLoading(submitButton, true, "Сохранение...");
+
     setUserAvatar(avatarInput.value)
         .then((userData) => {
             profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
-    closeModalWindow(avatarFormModalWindow);
+            closeModalWindow(avatarFormModalWindow);
         })
         .catch((err) => {
             console.log(err);
+        })
+        .finally(() => {
+            renderLoading(submitButton, false);
         });
 };
 
 const handleCardFormSubmit = (evt) => {
     evt.preventDefault();
+    const submitButton = evt.submitter;
+    renderLoading(submitButton, true, "Создание...");
+
     addCard({
         name: cardNameInput.value,
         link: cardLinkInput.value,
     })
         .then((cardData) => {
-    placesWrap.prepend(
-        createCardElement(
+            placesWrap.prepend(
+                createCardElement(
                     cardData,
-            {
-                onPreviewPicture: handlePreviewPicture,
-                onLikeIcon: handleLikeCard,
+                    {
+                        onPreviewPicture: handlePreviewPicture,
+                        onLikeIcon: handleLikeCard,
                         onDeleteCard: handleDeleteCard,
                         userId: currentUserId,
-            }
-        )
-    );
+                    }
+                )
+            );
 
-    closeModalWindow(cardFormModalWindow);
+            closeModalWindow(cardFormModalWindow);
         })
         .catch((err) => {
             console.log(err);
+        })
+        .finally(() => {
+            renderLoading(submitButton, false);
         });
 };
 
