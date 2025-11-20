@@ -70,6 +70,12 @@ const avatarFormModalWindow = document.querySelector(".popup_type_edit-avatar");
 const avatarForm = avatarFormModalWindow.querySelector(".popup__form");
 const avatarInput = avatarForm.querySelector(".popup__input");
 
+const cardInfoModalWindow = document.querySelector(".popup_type_info");
+const cardInfoModalTitle = cardInfoModalWindow.querySelector(".popup__title");
+const cardInfoModalInfoList = cardInfoModalWindow.querySelector(".popup__info");
+const cardInfoModalSubtitle = cardInfoModalWindow.querySelector(".popup__text");
+const cardInfoModalUserList = cardInfoModalWindow.querySelector(".popup__list");
+
 // Переменная для хранения ID текущего пользователя
 let currentUserId = null;
 
@@ -81,6 +87,35 @@ const renderLoading = (button, isLoading, loadingText = "Сохранение...
     } else {
         button.textContent = button.dataset.originalText || button.textContent;
     }
+};
+
+// Функция для форматирования даты
+const formatDate = (date) =>
+    date.toLocaleDateString("ru-RU", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+
+// Функция для создания строки информации из шаблона
+const createInfoString = (term, description) => {
+    const template = document.getElementById("popup-info-definition-template");
+    const infoElement = template.content.querySelector(".popup__info-item").cloneNode(true);
+
+    infoElement.querySelector(".popup__info-term").textContent = term;
+    infoElement.querySelector(".popup__info-description").textContent = description;
+
+    return infoElement;
+};
+
+// Функция для создания бейджа пользователя
+const createUserBadge = (userName) => {
+    const template = document.getElementById("popup-info-user-preview-template");
+    const userElement = template.content.querySelector(".popup__list-item").cloneNode(true);
+
+    userElement.textContent = userName;
+
+    return userElement;
 };
 
 const handlePreviewPicture = ({name, link}) => {
@@ -108,6 +143,60 @@ const handleLikeCard = (cardElement, cardId, likeButton, likeCounter) => {
             if (likeCounter) {
                 likeCounter.textContent = updatedCard.likes.length;
             }
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+};
+
+const handleInfoClick = (cardId) => {
+    /* Для вывода корректной информации необходимо получить актуальные данные с сервера. */
+    getCardList()
+        .then((cards) => {
+            // Находим нужную карточку по ID
+            const cardData = cards.find((card) => card._id === cardId);
+
+            if (!cardData) {
+                console.log("Карточка не найдена");
+                return;
+            }
+
+            // Очищаем содержимое модального окна
+            cardInfoModalInfoList.innerHTML = "";
+            cardInfoModalUserList.innerHTML = "";
+
+            // Заполняем заголовок
+            cardInfoModalTitle.textContent = "Информация о карточке";
+
+            // Добавляем информацию о карточке
+            cardInfoModalInfoList.append(
+                createInfoString("Описание:", cardData.name)
+            );
+            cardInfoModalInfoList.append(
+                createInfoString(
+                    "Дата создания:",
+                    formatDate(new Date(cardData.createdAt))
+                )
+            );
+            cardInfoModalInfoList.append(
+                createInfoString("Владелец:", cardData.owner.name)
+            );
+            cardInfoModalInfoList.append(
+                createInfoString("Количество лайков:", cardData.likes.length)
+            );
+
+            // Заполняем список пользователей, лайкнувших карточку
+            cardInfoModalSubtitle.textContent = "Лайкнули:";
+
+            if (cardData.likes.length > 0) {
+                cardData.likes.forEach((user) => {
+                    cardInfoModalUserList.append(createUserBadge(user.name));
+                });
+            } else {
+                cardInfoModalUserList.append(createUserBadge("Пока никто не лайкнул"));
+            }
+
+            openModalWindow(cardInfoModalWindow);
         })
         .catch((err) => {
             console.log(err);
@@ -171,6 +260,7 @@ const handleCardFormSubmit = (evt) => {
                         onPreviewPicture: handlePreviewPicture,
                         onLikeIcon: handleLikeCard,
                         onDeleteCard: handleDeleteCard,
+                        onInfoClick: handleInfoClick,
                         userId: currentUserId,
                     }
                 )
@@ -225,6 +315,7 @@ Promise.all([getCardList(), getUserInfo()])
                     onPreviewPicture: handlePreviewPicture,
                     onLikeIcon: handleLikeCard,
                     onDeleteCard: handleDeleteCard,
+                    onInfoClick: handleInfoClick,
                     userId: currentUserId,
                 })
             );
