@@ -15,8 +15,8 @@ export default defineConfig({
         emptyOutDir: true,  // очистка dist перед сборкой
         rollupOptions: {
             input: {
-                main: resolve(__dirname, 'index_vite.html'), // Главная страница
-                admin: resolve(__dirname, 'admin.html') // Страница администратора
+                main: resolve('index_vite.html'), // Главная страница
+                // admin: resolve(__dirname, 'admin.html') // Страница администратора
             }, // точка входа — index_vite.html
             output: {
                 manualChunks(id) {
