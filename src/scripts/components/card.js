@@ -1,7 +1,3 @@
-export const likeCard = (likeButton) => {
-  likeButton.classList.toggle("card__like-button_is-active");
-};
-
 export const deleteCard = (cardElement) => {
   cardElement.remove();
 };
@@ -51,10 +47,6 @@ export const createCardElement = (
 
   if (onLikeIcon) {
     likeButton.addEventListener("click", () => onLikeIcon(cardElement, data._id, likeButton, likeCounter));
-  }
-
-  if (onDeleteCard) {
-    deleteButton.addEventListener("click", () => onDeleteCard(cardElement, data._id));
   }
 
   if (onPreviewPicture) {

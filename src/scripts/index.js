@@ -31,18 +31,6 @@ const validationSettings = {
 
 enableValidation(validationSettings);
 
-const config = {
-    baseUrl: "https://mesto.nomoreparties.co/v1/apf-cohort-202",
-    headers: {
-        authorization: "e269baa8-9378-456f-bc9e-338e5ab687da",
-        "Content-Type": "application/json",
-    },
-};
-
-const getResponseData = (res) => {
-    return res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`);
-};
-
 // DOM узлы
 const placesWrap = document.querySelector(".places__list");
 const profileFormModalWindow = document.querySelector(".popup_type_edit");
@@ -131,7 +119,7 @@ const handleDeleteCard = (cardElement, cardId) => {
             deleteCard(cardElement);
         })
         .catch((err) => {
-            console.log(err);
+            alert(`Ошибка при удалении карточки: ${err}`);
         });
 };
 
@@ -145,7 +133,7 @@ const handleLikeCard = (cardElement, cardId, likeButton, likeCounter) => {
             }
         })
         .catch((err) => {
-            console.log(err);
+            alert(`Ошибка при постановке лайка: ${err}`);
         });
 };
 
@@ -157,7 +145,6 @@ const handleInfoClick = (cardId) => {
             const cardData = cards.find((card) => card._id === cardId);
 
             if (!cardData) {
-                console.log("Карточка не найдена");
                 return;
             }
 
@@ -199,7 +186,7 @@ const handleInfoClick = (cardId) => {
             openModalWindow(cardInfoModalWindow);
         })
         .catch((err) => {
-            console.log(err);
+            alert(`Ошибка при загрузке информации о карточке: ${err}`);
         });
 };
 
@@ -218,7 +205,7 @@ const handleProfileFormSubmit = (evt) => {
             closeModalWindow(profileFormModalWindow);
         })
         .catch((err) => {
-            console.log(err);
+            alert(`Ошибка при обновлении профиля: ${err}`);
         })
         .finally(() => {
             renderLoading(submitButton, false);
@@ -236,7 +223,7 @@ const handleAvatarFromSubmit = (evt) => {
             closeModalWindow(avatarFormModalWindow);
         })
         .catch((err) => {
-            console.log(err);
+            alert(`Ошибка при обновлении аватара: ${err}`);
         })
         .finally(() => {
             renderLoading(submitButton, false);
@@ -269,7 +256,7 @@ const handleCardFormSubmit = (evt) => {
             closeModalWindow(cardFormModalWindow);
         })
         .catch((err) => {
-            console.log(err);
+            alert(`Ошибка при добавлении карточки: ${err}`);
         })
         .finally(() => {
             renderLoading(submitButton, false);
@@ -284,16 +271,19 @@ avatarForm.addEventListener("submit", handleAvatarFromSubmit);
 openProfileFormButton.addEventListener("click", () => {
     profileTitleInput.value = profileTitle.textContent;
     profileDescriptionInput.value = profileDescription.textContent;
+    clearValidation(profileForm, validationSettings);
     openModalWindow(profileFormModalWindow);
 });
 
 profileAvatar.addEventListener("click", () => {
     avatarForm.reset();
+    clearValidation(avatarForm, validationSettings);
     openModalWindow(avatarFormModalWindow);
 });
 
 openCardFormButton.addEventListener("click", () => {
     cardForm.reset();
+    clearValidation(cardForm, validationSettings);
     openModalWindow(cardFormModalWindow);
 });
 
@@ -322,10 +312,10 @@ Promise.all([getCardList(), getUserInfo()])
         });
     })
     .catch((err) => {
-        console.log(err); // В случае возникновения ошибки выводим её в консоль
+        alert(`Ошибка при загрузке данных: ${err}`);
     });
 
-//настраиваем обработчики закрытия попапов
+// Настраиваем обработчики закрытия попапов
 const allPopups = document.querySelectorAll(".popup");
 allPopups.forEach((popup) => {
     setCloseModalWindowEventListeners(popup);
